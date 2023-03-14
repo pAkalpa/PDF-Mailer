@@ -1,34 +1,58 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
+import { open } from "@tauri-apps/api/dialog";
+import { desktopDir } from "@tauri-apps/api/path";
+import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+const desktopPath = await desktopDir();
 
+function App() {
+  const [pdf, setPdf] = useState<Uint8Array>();
+
+  async function modifyPdf(path: string) {
+    console.log("🤬 ~ file: App.tsx:15 ~ modifyPdf ~ path:", path);
+    const pdfDoc = await PDFDocument.load(path);
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
+    const { width, height } = firstPage.getSize();
+    firstPage.drawText("This text was added with JavaScript!", {
+      x: 5,
+      y: height / 2 + 300,
+      size: 50,
+      font: helveticaFont,
+      color: rgb(0.95, 0.1, 0.1),
+      rotate: degrees(-45),
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    console.log("🤬 ~ file: App.tsx:34 ~ modifyPdf ~ pdfBytes:", pdfBytes);
+    setPdf(pdfBytes);
+  }
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name }));
+    const selected = await open({
+      multiple: false,
+      title: "Select a PDF",
+      filters: [
+        {
+          name: "PDF Files",
+          extensions: ["pdf"],
+        },
+      ],
+    });
+    if (selected === null) {
+      // user cancelled the selection
+    } else {
+      modifyPdf(selected[0]);
+    }
   }
 
   return (
     <div className="container">
       <h1>Welcome to Tauri!</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
       <div className="row">
         <form
@@ -37,15 +61,15 @@ function App() {
             greet();
           }}
         >
-          <input
-            id="greet-input"
-            onChange={(e) => setName(e.currentTarget.value)}
-            placeholder="Enter a name..."
+          <iframe
+            title="frame"
+            width="300px"
+            height="700px"
+            src={`data:application/pdf;base64,${pdf}`}
           />
           <button type="submit">Greet</button>
         </form>
       </div>
-      <p>{greetMsg}</p>
     </div>
   );
 }
