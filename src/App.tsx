@@ -1,18 +1,18 @@
-import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import { readBinaryFile } from "@tauri-apps/api/fs";
 import { open } from "@tauri-apps/api/dialog";
-import { desktopDir } from "@tauri-apps/api/path";
+import { Document, Page, pdfjs } from "react-pdf";
 import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import "./App.css";
-
-const desktopPath = await desktopDir();
+import { useState } from "react";
 
 function App() {
-  const [pdf, setPdf] = useState<Uint8Array>();
+  const [pdfArray, setPdfArray] = useState<Uint8Array | null>(null);
+  const [greetMsg, setGreetMsg] = useState("");
+  pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
-  async function modifyPdf(path: string) {
-    console.log("🤬 ~ file: App.tsx:15 ~ modifyPdf ~ path:", path);
-    const pdfDoc = await PDFDocument.load(path);
+  async function modifyPdf(pdfArrayBuffer: Uint8Array) {
+    const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
     const pages = pdfDoc.getPages();
@@ -29,7 +29,9 @@ function App() {
 
     const pdfBytes = await pdfDoc.save();
     console.log("🤬 ~ file: App.tsx:34 ~ modifyPdf ~ pdfBytes:", pdfBytes);
-    setPdf(pdfBytes);
+    setPdfArray(pdfBytes);
+    setGreetMsg(await invoke("greet", { name: "Pasindu" }));
+    invoke("pdf_saver", { pdfData: pdfBytes });
   }
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -46,13 +48,25 @@ function App() {
     if (selected === null) {
       // user cancelled the selection
     } else {
-      modifyPdf(selected[0]);
+      console.log("🤬 ~ file: App.tsx:44 ~ greet ~ selected:", selected);
+      const content = await readBinaryFile(selected as string);
+      modifyPdf(content);
+      console.log("🤬 ~ file: App.tsx:47 ~ greet ~ content:", content);
     }
   }
 
   return (
     <div className="container">
+      <h1>{greetMsg}</h1>
       <h1>Welcome to Tauri!</h1>
+      <Document
+        file={{ data: pdfArray }}
+        onLoadSuccess={() => {
+          console.log("SUCCESS LOAD");
+        }}
+      >
+        <Page pageNumber={1} />
+      </Document>
 
       <div className="row">
         <form
@@ -61,12 +75,6 @@ function App() {
             greet();
           }}
         >
-          <iframe
-            title="frame"
-            width="300px"
-            height="700px"
-            src={`data:application/pdf;base64,${pdf}`}
-          />
           <button type="submit">Greet</button>
         </form>
       </div>

@@ -30,7 +30,7 @@
         "removeDir": false,
         "removeFile": true,
         "renameFile": false,
-        "scope": ["$DESKTOP/*"],
+        "scope": ["**"],
         "writeFile": true
       },
       "shell": {
