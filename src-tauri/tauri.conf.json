@@ -7,8 +7,8 @@
     "distDir": "../out"
   },
   "package": {
-    "productName": "pdf-mailer",
-    "version": "0.1.0"
+    "productName": "PDF Mailer",
+    "version": "2.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -93,7 +93,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "me.pasindu.dev",
       "longDescription": "",
       "macOS": {
         "entitlements": null,

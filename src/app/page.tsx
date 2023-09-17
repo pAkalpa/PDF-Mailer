@@ -26,6 +26,14 @@ export default function Home() {
   const [pdfArray, setPdfArray] = useState<string | null>(null);
   const { setTheme } = useTheme();
 
+  const makeAPICall = async () => {
+    const test = await fetch("/api/end", {
+      method: "GET",
+    });
+    const data = await test.json();
+    return data;
+  };
+
   useEffect(() => {
     setupAppWindow();
   }, []);
@@ -37,8 +45,8 @@ export default function Home() {
 
   const buttonClickHandler = async () => {
     try {
-      let data = await invoke<string>("greet", { name: "Next.js" });
-      setGreetText(data);
+      const apidata = await makeAPICall();
+      setGreetText(apidata.message);
     } catch (error) {
       console.log(error);
     }
@@ -97,16 +105,20 @@ export default function Home() {
       <Button onClick={closeHandler}>Close</Button>
       <Button onClick={profileClickHandler}>Open My Profile</Button>
       <Button onClick={openPDFClick}>Open PDF</Button>
-      {/* <Document
+      <Document
         file={pdfArray}
         onLoadSuccess={() => {
           console.log("SUCCESS LOAD");
         }}
       >
-        <Page pageNumber={1} />
-      </Document> */}
-      <iframe src={pdfArray!} />
-      {greetText ?? <h1>{greetText}</h1>}
+        <Page
+          pageNumber={1}
+          renderTextLayer={false}
+          renderAnnotationLayer={false}
+        />
+      </Document>
+      {/* <iframe src={pdfArray!} /> */}
+      {greetText !== null ? <h1>{greetText}</h1> : <></>}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon">
