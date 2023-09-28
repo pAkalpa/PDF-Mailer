@@ -1,144 +1,86 @@
 "use client";
 
 import { Button } from "#/components/ui/button";
-import { invoke } from "@tauri-apps/api/tauri";
-import { open as shellOpen } from "@tauri-apps/api/shell";
-import { open as dialogOpen } from "@tauri-apps/api/dialog";
-import { readBinaryFile } from "@tauri-apps/api/fs";
-import { useState, useEffect } from "react";
-import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "#/components/ui/dropdown-menu";
-import { WebviewWindow } from "@tauri-apps/api/window";
-import { Document, Page, pdfjs } from "react-pdf";
-import { degrees, PDFDocument, rgb, StandardFonts } from "pdf-lib";
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "#/components/ui/card";
+import { Input } from "#/components/ui/input";
+import { Label } from "#/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "#/components/ui/tooltip";
+import { Info } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { open as shellOpen } from "@tauri-apps/api/shell";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-
-export default function Home() {
-  const [greetText, setGreetText] = useState<string | null>(null);
-  const [appWindow, setAppWindow] = useState<WebviewWindow>();
-  const [pdfArray, setPdfArray] = useState<string | null>(null);
-  const { setTheme } = useTheme();
-
-  const makeAPICall = async () => {
-    const test = await fetch("/api/end", {
-      method: "GET",
-    });
-    const data = await test.json();
-    return data;
+export default function Login() {
+  const router = useRouter();
+  const onAppPasswordInfoClick = async () => {
+    await shellOpen(
+      "https://itsupport.umd.edu/itsupport?id=kb_article_view&sysparm_article=KB0015112"
+    );
   };
 
-  useEffect(() => {
-    setupAppWindow();
-  }, []);
-
-  async function setupAppWindow() {
-    const appWindow = (await import("@tauri-apps/api/window")).appWindow;
-    setAppWindow(appWindow);
-  }
-
-  const buttonClickHandler = async () => {
-    try {
-      const apidata = await makeAPICall();
-      setGreetText(apidata.message);
-    } catch (error) {
-      console.log(error);
-    }
+  const onSaveLoginClick = async () => {
+    router.replace("/experiments");
   };
-
-  const closeHandler = async () => {
-    await appWindow?.close();
-  };
-
-  const profileClickHandler = async () => {
-    await shellOpen("http://github.com/pAkalpa");
-  };
-
-  const modifyPdf = async (pdfArrayBuffer: Uint8Array) => {
-    const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
-    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-    const pages = pdfDoc.getPages();
-    const firstPage = pages[0];
-    const { width, height } = firstPage.getSize();
-    firstPage.drawText("This text was added with JavaScript!", {
-      x: 5,
-      y: height / 2 + 300,
-      size: 50,
-      font: helveticaFont,
-      color: rgb(0.95, 0.1, 0.1),
-      rotate: degrees(-45),
-    });
-
-    const pdfBytes = await pdfDoc.saveAsBase64({ dataUri: true });
-    setPdfArray(pdfBytes);
-  };
-
-  const openPDFClick = async () => {
-    const selected = await dialogOpen({
-      multiple: false,
-      title: "Select a PDF",
-      filters: [
-        {
-          name: "PDF Files",
-          extensions: ["pdf"],
-        },
-      ],
-    });
-    if (selected === null) {
-      // user cancelled the selection
-    } else {
-      const content = await readBinaryFile(selected as string);
-      modifyPdf(content);
-    }
-  };
-
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <Button onClick={buttonClickHandler}>Click Me</Button>
-      <Button onClick={closeHandler}>Close</Button>
-      <Button onClick={profileClickHandler}>Open My Profile</Button>
-      <Button onClick={openPDFClick}>Open PDF</Button>
-      <Document
-        file={pdfArray}
-        onLoadSuccess={() => {
-          console.log("SUCCESS LOAD");
-        }}
-      >
-        <Page
-          pageNumber={1}
-          renderTextLayer={false}
-          renderAnnotationLayer={false}
-        />
-      </Document>
-      {/* <iframe src={pdfArray!} /> */}
-      {greetText !== null ? <h1>{greetText}</h1> : <></>}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setTheme("light")}>
-            Light
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("dark")}>
-            Dark
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("system")}>
-            System
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </main>
+    <div className="flex min-h-screen items-center justify-center">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex justify-center">
+            Mass Mailer Login
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4 mt-8">
+            <div className="flex flex-row items-center gap-4">
+              <Label htmlFor="name" className="text-right w-28">
+                Email
+              </Label>
+              <Input
+                id="name"
+                type="email"
+                placeholder="Email"
+                className="w-[310px]"
+              />
+            </div>
+            <div className="flex flex-row items-center gap-4">
+              <Label htmlFor="username" className="text-right w-28">
+                App Password
+              </Label>
+              <Input
+                id="app-password"
+                type="password"
+                placeholder="App Password"
+                className="w-[310px]"
+              />
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info
+                    onClick={onAppPasswordInfoClick}
+                    className="justify-self-end"
+                  />
+                </TooltipTrigger>
+                <TooltipContent sideOffset={7}>
+                  <p>How to Generate App Password</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+          <CardFooter className="flex justify-end p-0 mt-8 mb-2">
+            <Button className="mr-10" onClick={onSaveLoginClick}>
+              Save Login
+            </Button>
+          </CardFooter>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
